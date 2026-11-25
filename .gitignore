@@ -1,0 +1,7 @@
+/sahand-projects
+/sahand-projects-linux-*
+/dist/
+*.tar.gz
+*.tmp
+/data/
+/seed-data/
