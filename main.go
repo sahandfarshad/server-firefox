@@ -257,7 +257,7 @@ func printInfo(st *Store) {
 	fmt.Println()
 	fmt.Println("  " + cGold + "✦ Server Firefox" + cReset + dim("  v"+version))
 	fmt.Println("  " + dim(strings.Repeat("─", 49)))
-		fmt.Println("  Panel:     " + siteURL(st) + st.Cfg.AdminPath)
+	fmt.Println("  Panel:     " + siteURL(st) + st.Cfg.AdminPath)
 	fmt.Println("  Username:  " + st.Cfg.User)
 	if p := readPlainPass(st.Dir); p != "" {
 		fmt.Println("  Password:  " + p)

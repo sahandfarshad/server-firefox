@@ -310,7 +310,7 @@ func sslSetup(st *Store) {
 	fmt.Println("  must be reachable from the internet for about a minute.")
 	fmt.Println()
 	dom := strings.ToLower(strings.TrimSpace(prompt("Domain", st.Cfg.Domain)))
-	if dom == "" || !hostRe.MatchString(dom) || strings.Contains(dom, ":") {
+	if dom == "" || !domainRe.MatchString(dom) || strings.Contains(dom, ":") {
 		fmt.Println("  Invalid domain.")
 		return
 	}

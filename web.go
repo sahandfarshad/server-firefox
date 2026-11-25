@@ -83,7 +83,9 @@ func jsonOut(w http.ResponseWriter, code int, v any) {
 	json.NewEncoder(w).Encode(v)
 }
 
-func errOut(w http.ResponseWriter, code int, msg string) { jsonOut(w, code, map[string]string{"error": msg}) }
+func errOut(w http.ResponseWriter, code int, msg string) {
+	jsonOut(w, code, map[string]string{"error": msg})
+}
 
 func (p *Panel) sign(exp int64) string {
 	m := hmac.New(sha256.New, []byte(p.st.Cfg.Secret+p.st.Cfg.PassHash))
@@ -138,7 +140,7 @@ func (p *Panel) login(w http.ResponseWriter, r *http.Request) {
 
 type serverView struct {
 	ID, Name, Host, SSHUser, Domain, WebUser, Resolution, HostKey, Status, LastError, Updated, URL, Running string
-	SSHPort                                                                                          int
+	SSHPort                                                                                                 int
 }
 
 func (p *Panel) servers(w http.ResponseWriter, r *http.Request) {
