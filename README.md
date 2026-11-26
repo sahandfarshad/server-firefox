@@ -24,3 +24,8 @@ bash <(curl -fsSL https://github.com/sahandfarshad/server-firefox/releases/lates
 - اثر کلید SSH هر سرور در اولین اتصال ذخیره و بعد بررسی می‌شود.
 - رمزها از طریق stdin به سرور مقصد می‌روند و روی آن ذخیره نمی‌شوند (فقط هش bcrypt برای Nginx).
 - VNC و websockify فقط روی localhost؛ ورود از همان ابتدا با Basic Auth.
+
+## Languages
+
+The panel opens in English; pick another language from the globe button (saved in the browser). 15 languages: English, فارسی, العربية, اردو, Türkçe, Türkmençe, Русский, Беларуская, 中文, 조선어, မြန်မာ, Tiếng Việt, Español, አማርኛ, ትግርኛ.
+Translations live in `i18n/`: edit `i18n/strings.py` or `i18n/ui.src.html`, then run `python3 i18n/build.py` to regenerate `ui.html`.

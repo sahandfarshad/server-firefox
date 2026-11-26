@@ -1,114 +1,163 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Server Firefox</title>
 <style>
 :root{--bg:#0f1115;--card:#171a21;--line:#262a33;--tx:#e8e6e3;--mut:#8b909a;--acc:#ff7139;--ok:#3ecf8e;--bad:#ff5d5d;--warn:#f5b84a}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 Vazirmatn,Tahoma,system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Vazirmatn,Tahoma,"Noto Sans","Noto Sans Ethiopic","Noto Sans Myanmar","Myanmar Text","Nyala","Ebrima",sans-serif}
 .wrap{max-width:980px;margin:0 auto;padding:28px 18px}
-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:22px}
 h1{font-size:20px;margin:0;display:flex;gap:10px;align-items:center}h1 i{width:12px;height:12px;border-radius:50%;background:var(--acc);display:inline-block}
-.mut{color:var(--mut);font-size:13px}
+.mut{color:var(--mut);font-size:13px}.top{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 button,.btn{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:9px;padding:7px 13px;font:inherit;font-size:13px;cursor:pointer;text-decoration:none;display:inline-block}
 button:hover,.btn:hover{border-color:#3a3f4a}.pri{background:var(--acc);border-color:var(--acc);color:#111;font-weight:600}.pri:hover{border-color:#ff9a6e}
 .danger{color:var(--bad)}button:disabled{opacity:.45;cursor:default}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
-.name{font-weight:600;font-size:16px}.meta{direction:ltr;text-align:right;color:var(--mut);font-size:13px}
+.name{font-weight:600;font-size:16px}.meta{direction:ltr;unicode-bidi:isolate;color:var(--mut);font-size:13px}
 .badge{font-size:12px;padding:2px 9px;border-radius:20px;border:1px solid var(--line)}
 .s-installed{color:var(--ok);border-color:#24533f}.s-failed{color:var(--bad);border-color:#5a2a2a}.s-installing{color:var(--warn);border-color:#5a4a22}
+.here{font-size:11px;color:var(--acc);border:1px solid #2c4a7a;border-radius:20px;padding:1px 8px;margin-inline-start:6px;vertical-align:2px}
 .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .err{color:var(--bad);font-size:13px;margin-top:8px}
 pre{direction:ltr;text-align:left;background:#0b0c0f;border:1px solid var(--line);border-radius:10px;padding:12px;max-height:360px;overflow:auto;font:12px/1.55 ui-monospace,Menlo,monospace;margin:12px 0 0;white-space:pre-wrap}
 dialog{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:16px;padding:22px;width:min(520px,94vw)}
 dialog::backdrop{background:#000a}
 label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+label.ck{display:flex;gap:8px;align-items:center;color:var(--tx)}label.ck input{width:auto}
 input,select{width:100%;background:#0f1115;color:var(--tx);border:1px solid var(--line);border-radius:9px;padding:9px 11px;font:inherit}
 input.ltr{direction:ltr;text-align:left}.g2{display:grid;grid-template-columns:2fr 1fr;gap:10px}.g11{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .empty{text-align:center;padding:50px 20px;color:var(--mut)}
-#login{max-width:340px;margin:12vh auto}
+#login{max-width:360px;margin:12vh auto}#login .lrow{display:flex;justify-content:space-between;align-items:center}
+/* language picker */
+.lang{position:relative}
+.lang>button{display:flex;gap:7px;align-items:center;border-radius:20px;padding:6px 12px}
+.lang>button svg{width:15px;height:15px;opacity:.8}
+.lang-pop{position:absolute;top:calc(100% + 8px);inset-inline-end:0;z-index:20;width:300px;background:#1b1f27;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px #000b;padding:8px;display:none}
+.lang.open .lang-pop{display:block;animation:pop .14s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.lang-pop input{margin-bottom:6px;padding:7px 10px;font-size:13px}
+.lang-list{max-height:min(380px,60vh);overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.lang-list button{all:unset;cursor:pointer;padding:7px 10px;border-radius:9px;display:flex;flex-direction:column;line-height:1.3}
+.lang-list button:hover,.lang-list button:focus-visible{background:#262b35}
+.lang-list button.on{background:#3a2318;outline:1px solid #a8512f}
+.lang-list b{font-weight:600;font-size:14px}.lang-list small{color:var(--mut);font-size:11px;direction:ltr}
 </style>
 </head>
 <body>
+<template id="langTpl">
+  <div class="lang">
+    <button type="button" class="lang-btn" aria-haspopup="listbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 3.9 5.8 3.9 9s-1.3 6.2-3.9 9c-2.6-2.8-3.9-5.8-3.9-9S9.4 5.8 12 3z"/></svg><span class="lang-cur"></span></button>
+    <div class="lang-pop"><input type="search" class="lang-q" placeholder="Search / جستجو"><div class="lang-list" role="listbox"></div></div>
+  </div>
+</template>
+
 <div id="login" class="card" hidden>
-  <h1><i></i> Server Firefox</h1>
-  <label>نام کاربری</label><input id="lu" class="ltr" autocomplete="username">
-  <label>رمز</label><input id="lp" class="ltr" type="password" autocomplete="current-password">
+  <div class="lrow"><h1><i></i> Server Firefox</h1><span class="lang-slot"></span></div>
+  <label data-t="user"></label><input id="lu" class="ltr" autocomplete="username">
+  <label data-t="pass"></label><input id="lp" class="ltr" type="password" autocomplete="current-password">
   <div class="err" id="lerr"></div>
-  <p><button class="pri" id="lbtn" style="width:100%">ورود</button></p>
+  <p><button class="pri" id="lbtn" style="width:100%" data-t="login"></button></p>
 </div>
 
 <div class="wrap" id="app" hidden>
   <header>
     <h1><i></i> Server Firefox <span class="mut" id="ver"></span></h1>
-    <div><button class="pri" onclick="openForm()">+ سرور جدید</button> <button onclick="logout()">خروج</button></div>
+    <div class="top"><button class="pri" onclick="openForm()">+ <span data-t="add"></span></button><span class="lang-slot"></span><button onclick="logout()" data-t="logout"></button></div>
   </header>
   <div id="list"></div>
 </div>
 
 <dialog id="dlg">
   <form method="dialog" id="frm" onsubmit="return false">
-    <div class="name" id="ftitle">سرور جدید</div>
+    <div class="name" id="ftitle"></div>
     <input type="hidden" name="ID">
-    <label>نام (دلخواه)</label><input name="Name" placeholder="مثلاً آلمان ۱">
-    <div class="g2"><div><label>IP سرور</label><input name="Host" class="ltr" required placeholder="1.2.3.4"></div>
-      <div><label>پورت SSH</label><input name="SSHPort" class="ltr" type="number" value="22"></div></div>
-    <div class="g11"><div><label>کاربر SSH</label><input name="SSHUser" class="ltr" value="root"></div>
-      <div><label>رمز SSH</label><input name="SSHPass" class="ltr" type="password" autocomplete="new-password"></div></div>
-    <label>دامنه (باید به IP همین سرور اشاره کند)</label><input name="Domain" class="ltr" required placeholder="fire.example.com">
-    <div class="g11"><div><label>نام کاربری ورود به Firefox</label><input name="WebUser" class="ltr" value="firefox"></div>
-      <div><label>رمز ورود به Firefox (حداقل ۸)</label><input name="WebPass" class="ltr" type="password" autocomplete="new-password"></div></div>
-    <label>رزولوشن صفحه</label>
-    <select name="Resolution"><option>1920x1080</option><option>1600x900</option><option>1366x768</option><option>1280x800</option><option>2560x1440</option></select>
-    <label style="display:flex;gap:8px;align-items:center" id="hkrow"><input type="checkbox" name="ClearHostKey" style="width:auto"> پاک کردن کلید SSH ذخیره‌شده (اگر سرور را دوباره نصب کرده‌ای)</label>
+    <label data-t="name_opt"></label><input name="Name" data-tp="name_ph">
+    <div class="g2"><div><label data-t="ip"></label><input name="Host" class="ltr" placeholder="1.2.3.4"></div>
+      <div><label data-t="ssh_port"></label><input name="SSHPort" class="ltr" type="number" value="22"></div></div>
+    <div class="g11"><div><label data-t="ssh_user"></label><input name="SSHUser" class="ltr" value="root"></div>
+      <div><label data-t="ssh_pass"></label><input name="SSHPass" class="ltr" type="password" autocomplete="new-password"></div></div>
+    <label data-t="domain"></label><input name="Domain" class="ltr" placeholder="fire.example.com">
+    <div class="g11"><div><label data-t="web_user"></label><input name="WebUser" class="ltr" value="firefox"></div>
+      <div><label data-t="web_pass"></label><input name="WebPass" class="ltr" type="password" autocomplete="new-password"></div></div>
+    <label data-t="resolution"></label>
+    <select name="Resolution" class="ltr"><option>1920x1080</option><option>1600x900</option><option>1366x768</option><option>1280x800</option><option>2560x1440</option></select>
+    <label class="ck" id="hkrow"><input type="checkbox" name="ClearHostKey"> <span data-t="clear_key"></span></label>
     <p class="mut" id="fhint"></p>
     <div class="err" id="ferr"></div>
-    <div class="acts"><button class="pri" onclick="save(true)">ذخیره و نصب</button><button onclick="save(false)">فقط ذخیره</button><button onclick="dlg.close()">انصراف</button></div>
+    <div class="acts"><button class="pri" onclick="save(true)" data-t="save_install"></button><button onclick="save(false)" data-t="save_only"></button><button onclick="dlg.close()" data-t="cancel"></button></div>
   </form>
 </dialog>
 
 <script>
+const LANGS = [["en", "English", "English", false], ["fa", "فارسی", "Persian", true], ["ar", "العربية", "Arabic", true], ["ur", "اردو", "Urdu", true], ["tr", "Türkçe", "Turkish", false], ["tk", "Türkmençe", "Turkmen", false], ["ru", "Русский", "Russian", false], ["be", "Беларуская", "Belarusian", false], ["zh", "中文", "Chinese", false], ["ko", "조선어", "Korean", false], ["my", "မြန်မာ", "Burmese", false], ["vi", "Tiếng Việt", "Vietnamese", false], ["es", "Español", "Spanish", false], ["am", "አማርኛ", "Amharic", false], ["ti", "ትግርኛ", "Tigrinya", false]];
+const I18N = {"en": {"lang": "Language", "user": "Username", "pass": "Password", "login": "Sign in", "wrong": "Wrong username or password", "add": "New server", "logout": "Sign out", "empty": "No servers yet.", "add_first": "Add your first server", "new_server": "New server", "edit_title": "Edit {name}", "name_opt": "Name (optional)", "name_ph": "e.g. Germany 1", "ip": "Server IP", "ssh_port": "SSH port", "ssh_user": "SSH user", "ssh_pass": "SSH password", "clear_key": "Clear the saved SSH key (if the server was reinstalled)", "save_install": "Save and install", "save_only": "Save only", "cancel": "Cancel", "hint_edit": "Leave passwords empty to keep the current ones.", "st_new": "Not installed", "st_installing": "Installing", "st_installed": "Installed", "st_failed": "Failed", "st_removed": "Removed", "run_install": "Installing…", "run_status": "Checking…", "run_restart": "Restarting…", "run_uninstall": "Removing…", "status": "Status", "reinstall": "Reinstall", "edit": "Edit", "log": "Log", "delete": "Delete", "no_job": "Nothing has run on this server yet.", "c_reinstall": "Install again? The new settings and password will be applied.", "domain": "Domain (must point to this server's IP)", "web_user": "Firefox login username", "web_pass": "Firefox login password (min. 8)", "resolution": "Screen resolution", "hint_new": "Before installing, point the domain's A record to the server IP and open ports 80 and 443. OS: Ubuntu 22.04 / 24.04 or Debian 12.", "open_ff": "Open Firefox ↗", "install": "Install Firefox", "restart": "Restart Firefox", "c_uninstall": "Remove Firefox from {name}?", "c_remove": "{name}\n1 = also remove Firefox from the server, then delete it from the list\n2 = only delete it from the list", "e_host": "Invalid server IP or host", "e_domain": "Invalid domain (example: fire.example.com)", "e_user": "Firefox username: 3 to 32 letters, digits, dot, dash or underscore", "e_pass": "Firefox password must be at least 8 characters", "e_sshpass": "SSH password is required"}, "fa": {"lang": "زبان", "user": "نام کاربری", "pass": "رمز", "login": "ورود", "wrong": "نام کاربری یا رمز اشتباه است", "add": "سرور جدید", "logout": "خروج", "empty": "هنوز سروری اضافه نکرده‌ای.", "add_first": "افزودن اولین سرور", "new_server": "سرور جدید", "edit_title": "ویرایش {name}", "name_opt": "نام (دلخواه)", "name_ph": "مثلاً آلمان ۱", "ip": "IP سرور", "ssh_port": "پورت SSH", "ssh_user": "کاربر SSH", "ssh_pass": "رمز SSH", "clear_key": "پاک کردن کلید SSH ذخیره‌شده (اگر سرور را دوباره نصب کرده‌ای)", "save_install": "ذخیره و نصب", "save_only": "فقط ذخیره", "cancel": "انصراف", "hint_edit": "رمزها را خالی بگذار تا قبلی‌ها بمانند.", "st_new": "نصب نشده", "st_installing": "در حال نصب", "st_installed": "نصب شده", "st_failed": "ناموفق", "st_removed": "حذف شده", "run_install": "در حال نصب…", "run_status": "در حال بررسی…", "run_restart": "در حال ری‌استارت…", "run_uninstall": "در حال حذف…", "status": "وضعیت", "reinstall": "نصب دوباره", "edit": "ویرایش", "log": "لاگ", "delete": "حذف", "no_job": "هنوز کاری روی این سرور اجرا نشده.", "c_reinstall": "دوباره نصب شود؟ تنظیمات و رمز جدید اعمال می‌شود.", "domain": "دامنه (باید به IP همین سرور اشاره کند)", "web_user": "نام کاربری ورود به Firefox", "web_pass": "رمز ورود به Firefox (حداقل ۸)", "resolution": "رزولوشن صفحه", "hint_new": "قبل از نصب، رکورد A دامنه را روی IP سرور بگذار و پورت‌های 80 و 443 باز باشند. سیستم‌عامل: Ubuntu 22.04 / 24.04 یا Debian 12.", "open_ff": "باز کردن Firefox ↗", "install": "نصب Firefox", "restart": "ری‌استارت Firefox", "c_uninstall": "Firefox از {name} حذف شود؟", "c_remove": "{name}\n۱ = Firefox را از خود سرور هم پاک کن، بعد از لیست حذف کن\n۲ = فقط از لیست حذف کن", "e_host": "IP یا آدرس سرور نامعتبر است", "e_domain": "دامنه نامعتبر است (مثال: fire.example.com)", "e_user": "نام کاربری Firefox: ۳ تا ۳۲ حرف، عدد، نقطه، خط تیره یا زیرخط", "e_pass": "رمز Firefox باید حداقل ۸ کاراکتر باشد", "e_sshpass": "رمز SSH لازم است"}, "ar": {"lang": "اللغة", "user": "اسم المستخدم", "pass": "كلمة المرور", "login": "تسجيل الدخول", "wrong": "اسم المستخدم أو كلمة المرور غير صحيحة", "add": "خادم جديد", "logout": "تسجيل الخروج", "empty": "لا توجد خوادم بعد.", "add_first": "أضف أول خادم", "new_server": "خادم جديد", "edit_title": "تعديل {name}", "name_opt": "الاسم (اختياري)", "name_ph": "مثلاً: ألمانيا 1", "ip": "عنوان IP للخادم", "ssh_port": "منفذ SSH", "ssh_user": "مستخدم SSH", "ssh_pass": "كلمة مرور SSH", "clear_key": "مسح مفتاح SSH المحفوظ (إذا أُعيد تثبيت الخادم)", "save_install": "حفظ وتثبيت", "save_only": "حفظ فقط", "cancel": "إلغاء", "hint_edit": "اترك كلمات المرور فارغة للإبقاء على الحالية.", "st_new": "غير مثبّت", "st_installing": "جارٍ التثبيت", "st_installed": "مثبّت", "st_failed": "فشل", "st_removed": "محذوف", "run_install": "جارٍ التثبيت…", "run_status": "جارٍ الفحص…", "run_restart": "جارٍ إعادة التشغيل…", "run_uninstall": "جارٍ الحذف…", "status": "الحالة", "reinstall": "إعادة التثبيت", "edit": "تعديل", "log": "السجل", "delete": "حذف", "no_job": "لم يُنفَّذ أي شيء على هذا الخادم بعد.", "c_reinstall": "إعادة التثبيت؟ ستُطبَّق الإعدادات وكلمة المرور الجديدة.", "domain": "النطاق (يجب أن يشير إلى IP هذا الخادم)", "web_user": "اسم مستخدم دخول Firefox", "web_pass": "كلمة مرور دخول Firefox (8 على الأقل)", "resolution": "دقة الشاشة", "hint_new": "قبل التثبيت، وجّه سجل A للنطاق إلى IP الخادم وافتح المنفذين 80 و443. النظام: Ubuntu 22.04 / 24.04 أو Debian 12.", "open_ff": "فتح Firefox ↗", "install": "تثبيت Firefox", "restart": "إعادة تشغيل Firefox", "c_uninstall": "حذف Firefox من {name}؟", "c_remove": "{name}\n1 = احذف Firefox من الخادم أيضاً، ثم من القائمة\n2 = احذفه من القائمة فقط", "e_host": "عنوان IP أو اسم الخادم غير صالح", "e_domain": "نطاق غير صالح (مثال: fire.example.com)", "e_user": "اسم مستخدم Firefox: من 3 إلى 32 حرفاً أو رقماً أو نقطة أو شرطة أو شرطة سفلية", "e_pass": "يجب أن تكون كلمة مرور Firefox من 8 أحرف على الأقل", "e_sshpass": "كلمة مرور SSH مطلوبة"}, "ur": {"lang": "زبان", "user": "صارف نام", "pass": "پاس ورڈ", "login": "سائن اِن", "wrong": "صارف نام یا پاس ورڈ غلط ہے", "add": "نیا سرور", "logout": "سائن آؤٹ", "empty": "ابھی کوئی سرور نہیں۔", "add_first": "اپنا پہلا سرور شامل کریں", "new_server": "نیا سرور", "edit_title": "{name} میں ترمیم", "name_opt": "نام (اختیاری)", "name_ph": "مثلاً جرمنی 1", "ip": "سرور IP", "ssh_port": "SSH پورٹ", "ssh_user": "SSH صارف", "ssh_pass": "SSH پاس ورڈ", "clear_key": "محفوظ SSH کلید صاف کریں (اگر سرور دوبارہ انسٹال ہوا ہو)", "save_install": "محفوظ کریں اور انسٹال کریں", "save_only": "صرف محفوظ کریں", "cancel": "منسوخ", "hint_edit": "موجودہ پاس ورڈ رکھنے کے لیے خانے خالی چھوڑیں۔", "st_new": "انسٹال نہیں", "st_installing": "انسٹال ہو رہا ہے", "st_installed": "انسٹال شدہ", "st_failed": "ناکام", "st_removed": "ہٹا دیا گیا", "run_install": "انسٹال ہو رہا ہے…", "run_status": "جانچ ہو رہی ہے…", "run_restart": "ری اسٹارٹ ہو رہا ہے…", "run_uninstall": "ہٹایا جا رہا ہے…", "status": "اسٹیٹس", "reinstall": "دوبارہ انسٹال", "edit": "ترمیم", "log": "لاگ", "delete": "حذف", "no_job": "اس سرور پر ابھی کچھ نہیں چلا۔", "c_reinstall": "دوبارہ انسٹال کریں؟ نئی سیٹنگز اور پاس ورڈ لاگو ہوں گے۔", "domain": "ڈومین (اسی سرور کے IP کی طرف اشارہ کرے)", "web_user": "Firefox لاگ اِن صارف نام", "web_pass": "Firefox لاگ اِن پاس ورڈ (کم از کم 8)", "resolution": "اسکرین ریزولوشن", "hint_new": "انسٹال سے پہلے ڈومین کا A ریکارڈ سرور IP پر لگائیں اور پورٹ 80 اور 443 کھولیں۔ OS: Ubuntu 22.04 / 24.04 یا Debian 12۔", "open_ff": "Firefox کھولیں ↗", "install": "Firefox انسٹال کریں", "restart": "Firefox ری اسٹارٹ", "c_uninstall": "{name} سے Firefox ہٹائیں؟", "c_remove": "{name}\n1 = سرور سے Firefox بھی ہٹائیں، پھر فہرست سے حذف کریں\n2 = صرف فہرست سے حذف کریں", "e_host": "سرور IP یا ہوسٹ غلط ہے", "e_domain": "ڈومین غلط ہے (مثال: fire.example.com)", "e_user": "Firefox صارف نام: 3 سے 32 حروف، ہندسے، نقطہ، ڈیش یا انڈر اسکور", "e_pass": "Firefox پاس ورڈ کم از کم 8 حروف کا ہو", "e_sshpass": "SSH پاس ورڈ ضروری ہے"}, "tr": {"lang": "Dil", "user": "Kullanıcı adı", "pass": "Parola", "login": "Giriş yap", "wrong": "Kullanıcı adı veya parola yanlış", "add": "Yeni sunucu", "logout": "Çıkış", "empty": "Henüz sunucu yok.", "add_first": "İlk sunucunu ekle", "new_server": "Yeni sunucu", "edit_title": "{name} düzenle", "name_opt": "Ad (isteğe bağlı)", "name_ph": "ör. Almanya 1", "ip": "Sunucu IP", "ssh_port": "SSH portu", "ssh_user": "SSH kullanıcısı", "ssh_pass": "SSH parolası", "clear_key": "Kayıtlı SSH anahtarını temizle (sunucu yeniden kurulduysa)", "save_install": "Kaydet ve kur", "save_only": "Sadece kaydet", "cancel": "İptal", "hint_edit": "Mevcut parolaları korumak için boş bırak.", "st_new": "Kurulu değil", "st_installing": "Kuruluyor", "st_installed": "Kurulu", "st_failed": "Başarısız", "st_removed": "Kaldırıldı", "run_install": "Kuruluyor…", "run_status": "Kontrol ediliyor…", "run_restart": "Yeniden başlatılıyor…", "run_uninstall": "Kaldırılıyor…", "status": "Durum", "reinstall": "Yeniden kur", "edit": "Düzenle", "log": "Günlük", "delete": "Sil", "no_job": "Bu sunucuda henüz bir şey çalıştırılmadı.", "c_reinstall": "Yeniden kurulsun mu? Yeni ayarlar ve parola uygulanacak.", "domain": "Alan adı (bu sunucunun IP'sini göstermeli)", "web_user": "Firefox giriş kullanıcı adı", "web_pass": "Firefox giriş parolası (en az 8)", "resolution": "Ekran çözünürlüğü", "hint_new": "Kurmadan önce alan adının A kaydını sunucu IP'sine yönlendirin ve 80 ile 443 portlarını açın. İS: Ubuntu 22.04 / 24.04 veya Debian 12.", "open_ff": "Firefox'u aç ↗", "install": "Firefox'u kur", "restart": "Firefox'u yeniden başlat", "c_uninstall": "Firefox {name} sunucusundan kaldırılsın mı?", "c_remove": "{name}\n1 = Firefox'u sunucudan da kaldır, sonra listeden sil\n2 = yalnızca listeden sil", "e_host": "Geçersiz sunucu IP'si veya adı", "e_domain": "Geçersiz alan adı (örnek: fire.example.com)", "e_user": "Firefox kullanıcı adı: 3-32 harf, rakam, nokta, tire veya alt çizgi", "e_pass": "Firefox parolası en az 8 karakter olmalı", "e_sshpass": "SSH parolası gerekli"}, "tk": {"lang": "Dil", "user": "Ulanyjy ady", "pass": "Açar sözi", "login": "Girmek", "wrong": "Ulanyjy ady ýa-da açar sözi nädogry", "add": "Täze serwer", "logout": "Çykmak", "empty": "Entek serwer ýok.", "add_first": "Ilkinji serweriňi goş", "new_server": "Täze serwer", "edit_title": "{name} üýtgetmek", "name_opt": "Ady (islege görä)", "name_ph": "mysal: Germaniýa 1", "ip": "Serweriň IP-si", "ssh_port": "SSH porty", "ssh_user": "SSH ulanyjysy", "ssh_pass": "SSH açar sözi", "clear_key": "Ýatda saklanan SSH açaryny arassalamak (serwer täzeden gurlan bolsa)", "save_install": "Sakla we gurna", "save_only": "Diňe sakla", "cancel": "Ýatyr", "hint_edit": "Häzirki açar sözleri saklamak üçin boş goý.", "st_new": "Gurulmadyk", "st_installing": "Gurulýar", "st_installed": "Gurlan", "st_failed": "Şowsuz", "st_removed": "Aýryldy", "run_install": "Gurulýar…", "run_status": "Barlanýar…", "run_restart": "Täzeden işledilýär…", "run_uninstall": "Aýrylýar…", "status": "Ýagdaý", "reinstall": "Täzeden gurna", "edit": "Üýtget", "log": "Žurnal", "delete": "Poz", "no_job": "Bu serwerde entek hiç zat işledilmedi.", "c_reinstall": "Täzeden gurnalsynmy? Täze sazlamalar we açar sözi ulanylar.", "domain": "Domen (şu serweriň IP-sine görkezmeli)", "web_user": "Firefox giriş ulanyjy ady", "web_pass": "Firefox giriş açar sözi (iň az 8)", "resolution": "Ekranyň çözgüdi", "hint_new": "Gurnamazdan öň domeniň A ýazgysyny serweriň IP-sine görkeziň we 80 hem-de 443 portlaryny açyň. OS: Ubuntu 22.04 / 24.04 ýa-da Debian 12.", "open_ff": "Firefox-y aç ↗", "install": "Firefox gurna", "restart": "Firefox-y täzeden işlet", "c_uninstall": "Firefox {name} serwerinden aýrylsynmy?", "c_remove": "{name}\n1 = Firefox-y serwerden hem aýyr, soň sanawdan poz\n2 = diňe sanawdan poz", "e_host": "Serweriň IP-si ýa-da ady nädogry", "e_domain": "Domen nädogry (mysal: fire.example.com)", "e_user": "Firefox ulanyjy ady: 3-den 32-ä çenli harp, san, nokat, defis ýa-da aşaky çyzyk", "e_pass": "Firefox açar sözi iň az 8 nyşan bolmaly", "e_sshpass": "SSH açar sözi hökmany"}, "ru": {"lang": "Язык", "user": "Имя пользователя", "pass": "Пароль", "login": "Войти", "wrong": "Неверное имя пользователя или пароль", "add": "Новый сервер", "logout": "Выйти", "empty": "Серверов пока нет.", "add_first": "Добавьте первый сервер", "new_server": "Новый сервер", "edit_title": "Изменить {name}", "name_opt": "Название (необязательно)", "name_ph": "напр. Германия 1", "ip": "IP сервера", "ssh_port": "Порт SSH", "ssh_user": "Пользователь SSH", "ssh_pass": "Пароль SSH", "clear_key": "Сбросить сохранённый SSH-ключ (если сервер переустановлен)", "save_install": "Сохранить и установить", "save_only": "Только сохранить", "cancel": "Отмена", "hint_edit": "Оставьте пароли пустыми, чтобы сохранить текущие.", "st_new": "Не установлен", "st_installing": "Установка", "st_installed": "Установлен", "st_failed": "Ошибка", "st_removed": "Удалён", "run_install": "Установка…", "run_status": "Проверка…", "run_restart": "Перезапуск…", "run_uninstall": "Удаление…", "status": "Статус", "reinstall": "Переустановить", "edit": "Изменить", "log": "Журнал", "delete": "Удалить", "no_job": "На этом сервере ещё ничего не запускалось.", "c_reinstall": "Установить заново? Будут применены новые настройки и пароль.", "domain": "Домен (должен указывать на IP этого сервера)", "web_user": "Логин для входа в Firefox", "web_pass": "Пароль для входа в Firefox (мин. 8)", "resolution": "Разрешение экрана", "hint_new": "Перед установкой направьте A-запись домена на IP сервера и откройте порты 80 и 443. ОС: Ubuntu 22.04 / 24.04 или Debian 12.", "open_ff": "Открыть Firefox ↗", "install": "Установить Firefox", "restart": "Перезапустить Firefox", "c_uninstall": "Удалить Firefox с {name}?", "c_remove": "{name}\n1 = удалить Firefox и с сервера, затем из списка\n2 = только удалить из списка", "e_host": "Неверный IP или адрес сервера", "e_domain": "Неверный домен (пример: fire.example.com)", "e_user": "Логин Firefox: от 3 до 32 букв, цифр, точек, дефисов или подчёркиваний", "e_pass": "Пароль Firefox должен быть не короче 8 символов", "e_sshpass": "Нужен пароль SSH"}, "be": {"lang": "Мова", "user": "Імя карыстальніка", "pass": "Пароль", "login": "Увайсці", "wrong": "Няправільнае імя карыстальніка або пароль", "add": "Новы сервер", "logout": "Выйсці", "empty": "Сервераў пакуль няма.", "add_first": "Дадайце першы сервер", "new_server": "Новы сервер", "edit_title": "Змяніць {name}", "name_opt": "Назва (неабавязкова)", "name_ph": "напр. Германія 1", "ip": "IP сервера", "ssh_port": "Порт SSH", "ssh_user": "Карыстальнік SSH", "ssh_pass": "Пароль SSH", "clear_key": "Скінуць захаваны SSH-ключ (калі сервер пераўсталяваны)", "save_install": "Захаваць і ўсталяваць", "save_only": "Толькі захаваць", "cancel": "Скасаваць", "hint_edit": "Пакіньце паролі пустымі, каб захаваць бягучыя.", "st_new": "Не ўсталяваны", "st_installing": "Усталёўка", "st_installed": "Усталяваны", "st_failed": "Памылка", "st_removed": "Выдалены", "run_install": "Усталёўка…", "run_status": "Праверка…", "run_restart": "Перазапуск…", "run_uninstall": "Выдаленне…", "status": "Статус", "reinstall": "Пераўсталяваць", "edit": "Змяніць", "log": "Журнал", "delete": "Выдаліць", "no_job": "На гэтым серверы яшчэ нічога не запускалася.", "c_reinstall": "Усталяваць нанова? Будуць ужыты новыя налады і пароль.", "domain": "Дамен (павінен паказваць на IP гэтага сервера)", "web_user": "Лагін для ўваходу ў Firefox", "web_pass": "Пароль для ўваходу ў Firefox (мін. 8)", "resolution": "Раздзяляльнасць экрана", "hint_new": "Перад усталяваннем накіруйце A-запіс дамена на IP сервера і адкрыйце парты 80 і 443. АС: Ubuntu 22.04 / 24.04 або Debian 12.", "open_ff": "Адкрыць Firefox ↗", "install": "Усталяваць Firefox", "restart": "Перазапусціць Firefox", "c_uninstall": "Выдаліць Firefox з {name}?", "c_remove": "{name}\n1 = выдаліць Firefox таксама з сервера, потым са спіса\n2 = толькі выдаліць са спіса", "e_host": "Няправільны IP або адрас сервера", "e_domain": "Няправільны дамен (прыклад: fire.example.com)", "e_user": "Лагін Firefox: ад 3 да 32 літар, лічбаў, кропак, злучкоў або падкрэсленняў", "e_pass": "Пароль Firefox павінен мець не менш за 8 сімвалаў", "e_sshpass": "Патрэбны пароль SSH"}, "zh": {"lang": "语言", "user": "用户名", "pass": "密码", "login": "登录", "wrong": "用户名或密码错误", "add": "新服务器", "logout": "退出", "empty": "还没有服务器。", "add_first": "添加第一台服务器", "new_server": "新服务器", "edit_title": "编辑 {name}", "name_opt": "名称（可选）", "name_ph": "例如 德国 1", "ip": "服务器 IP", "ssh_port": "SSH 端口", "ssh_user": "SSH 用户", "ssh_pass": "SSH 密码", "clear_key": "清除已保存的 SSH 密钥（如果服务器已重装）", "save_install": "保存并安装", "save_only": "仅保存", "cancel": "取消", "hint_edit": "密码留空则保留当前密码。", "st_new": "未安装", "st_installing": "安装中", "st_installed": "已安装", "st_failed": "失败", "st_removed": "已移除", "run_install": "安装中…", "run_status": "检查中…", "run_restart": "重启中…", "run_uninstall": "移除中…", "status": "状态", "reinstall": "重新安装", "edit": "编辑", "log": "日志", "delete": "删除", "no_job": "此服务器上还没有运行过任何操作。", "c_reinstall": "重新安装？将应用新的设置和密码。", "domain": "域名（必须指向此服务器的 IP）", "web_user": "Firefox 登录用户名", "web_pass": "Firefox 登录密码（至少 8 位）", "resolution": "屏幕分辨率", "hint_new": "安装前，请将域名的 A 记录指向服务器 IP，并开放 80 和 443 端口。系统：Ubuntu 22.04 / 24.04 或 Debian 12。", "open_ff": "打开 Firefox ↗", "install": "安装 Firefox", "restart": "重启 Firefox", "c_uninstall": "从 {name} 移除 Firefox？", "c_remove": "{name}\n1 = 同时从服务器移除 Firefox，然后从列表删除\n2 = 仅从列表删除", "e_host": "服务器 IP 或主机名无效", "e_domain": "域名无效（例如：fire.example.com）", "e_user": "Firefox 用户名：3 到 32 个字母、数字、点、连字符或下划线", "e_pass": "Firefox 密码至少 8 个字符", "e_sshpass": "需要 SSH 密码"}, "ko": {"lang": "언어", "user": "사용자 이름", "pass": "암호", "login": "가입", "wrong": "사용자 이름 또는 암호가 틀립니다", "add": "새 봉사기", "logout": "탈퇴", "empty": "아직 봉사기가 없습니다.", "add_first": "첫 봉사기 추가", "new_server": "새 봉사기", "edit_title": "{name} 편집", "name_opt": "이름 (선택)", "name_ph": "례: 독일 1", "ip": "봉사기 IP", "ssh_port": "SSH 포구", "ssh_user": "SSH 사용자", "ssh_pass": "SSH 암호", "clear_key": "저장된 SSH 열쇠 지우기 (봉사기를 다시 설치한 경우)", "save_install": "저장하고 설치", "save_only": "저장만", "cancel": "취소", "hint_edit": "현재 암호를 유지하려면 비워 두십시오.", "st_new": "설치 안 됨", "st_installing": "설치 중", "st_installed": "설치됨", "st_failed": "실패", "st_removed": "제거됨", "run_install": "설치 중…", "run_status": "확인 중…", "run_restart": "재시동 중…", "run_uninstall": "제거 중…", "status": "상태", "reinstall": "다시 설치", "edit": "편집", "log": "기록", "delete": "삭제", "no_job": "이 봉사기에서 아직 실행된 작업이 없습니다.", "c_reinstall": "다시 설치하겠습니까? 새 설정과 암호가 적용됩니다.", "domain": "도메인 (이 봉사기의 IP를 가리켜야 함)", "web_user": "Firefox 가입 사용자 이름", "web_pass": "Firefox 가입 암호 (최소 8자)", "resolution": "화면 해상도", "hint_new": "설치하기 전에 도메인의 A 기록을 봉사기 IP로 지정하고 80, 443 포구를 여십시오. 조작체계: Ubuntu 22.04 / 24.04 또는 Debian 12.", "open_ff": "Firefox 열기 ↗", "install": "Firefox 설치", "restart": "Firefox 재시동", "c_uninstall": "{name}에서 Firefox를 제거하겠습니까?", "c_remove": "{name}\n1 = 봉사기에서도 Firefox를 제거한 다음 목록에서 삭제\n2 = 목록에서만 삭제", "e_host": "봉사기 IP 또는 주소가 올바르지 않습니다", "e_domain": "도메인이 올바르지 않습니다 (례: fire.example.com)", "e_user": "Firefox 사용자 이름: 3~32자의 글자, 수자, 점, 줄표 또는 밑줄", "e_pass": "Firefox 암호는 최소 8자여야 합니다", "e_sshpass": "SSH 암호가 필요합니다"}, "my": {"lang": "ဘာသာစကား", "user": "အသုံးပြုသူအမည်", "pass": "စကားဝှက်", "login": "ဝင်ရန်", "wrong": "အသုံးပြုသူအမည် သို့မဟုတ် စကားဝှက် မှားနေသည်", "add": "ဆာဗာအသစ်", "logout": "ထွက်ရန်", "empty": "ဆာဗာ မရှိသေးပါ။", "add_first": "ပထမဆုံး ဆာဗာကို ထည့်ပါ", "new_server": "ဆာဗာအသစ်", "edit_title": "{name} ပြင်ဆင်ရန်", "name_opt": "အမည် (ရွေးချယ်နိုင်)", "name_ph": "ဥပမာ ဂျာမနီ 1", "ip": "ဆာဗာ IP", "ssh_port": "SSH ပို့တ်", "ssh_user": "SSH အသုံးပြုသူ", "ssh_pass": "SSH စကားဝှက်", "clear_key": "သိမ်းထားသော SSH key ကို ဖျက်ရန် (ဆာဗာ ပြန်တင်ထားလျှင်)", "save_install": "သိမ်းပြီး ထည့်သွင်းရန်", "save_only": "သိမ်းရုံသာ", "cancel": "မလုပ်တော့ပါ", "hint_edit": "လက်ရှိ စကားဝှက်များ ထားလိုပါက ကွက်လပ်ထားပါ။", "st_new": "မထည့်သွင်းရသေး", "st_installing": "ထည့်သွင်းနေသည်", "st_installed": "ထည့်သွင်းပြီး", "st_failed": "မအောင်မြင်", "st_removed": "ဖယ်ရှားပြီး", "run_install": "ထည့်သွင်းနေသည်…", "run_status": "စစ်ဆေးနေသည်…", "run_restart": "ပြန်စနေသည်…", "run_uninstall": "ဖယ်ရှားနေသည်…", "status": "အခြေအနေ", "reinstall": "ပြန်ထည့်သွင်းရန်", "edit": "ပြင်ဆင်ရန်", "log": "မှတ်တမ်း", "delete": "ဖျက်ရန်", "no_job": "ဤဆာဗာတွင် ဘာမှ မလုပ်ဆောင်ရသေးပါ။", "c_reinstall": "ပြန်ထည့်သွင်းမလား။ ဆက်တင်နှင့် စကားဝှက်အသစ် အသက်ဝင်မည်။", "domain": "ဒိုမိန်း (ဤဆာဗာ၏ IP သို့ ညွှန်ပြရမည်)", "web_user": "Firefox ဝင်ရောက်ရန် အသုံးပြုသူအမည်", "web_pass": "Firefox ဝင်ရောက်ရန် စကားဝှက် (အနည်းဆုံး 8)", "resolution": "မျက်နှာပြင် ရီဆိုလူးရှင်း", "hint_new": "မထည့်သွင်းမီ ဒိုမိန်း၏ A record ကို ဆာဗာ IP သို့ ညွှန်ပြီး ပို့တ် 80 နှင့် 443 ကို ဖွင့်ပါ။ OS: Ubuntu 22.04 / 24.04 သို့မဟုတ် Debian 12။", "open_ff": "Firefox ဖွင့်ရန် ↗", "install": "Firefox ထည့်သွင်းရန်", "restart": "Firefox ပြန်စရန်", "c_uninstall": "{name} မှ Firefox ကို ဖယ်ရှားမလား။", "c_remove": "{name}\n1 = ဆာဗာမှ Firefox ကိုပါ ဖယ်ရှားပြီး စာရင်းမှ ဖျက်ရန်\n2 = စာရင်းမှသာ ဖျက်ရန်", "e_host": "ဆာဗာ IP သို့မဟုတ် host မမှန်ပါ", "e_domain": "ဒိုမိန်း မမှန်ပါ (ဥပမာ: fire.example.com)", "e_user": "Firefox အသုံးပြုသူအမည်: စာလုံး၊ ဂဏန်း၊ အစက်၊ တုံးတို သို့မဟုတ် underscore 3 မှ 32 လုံး", "e_pass": "Firefox စကားဝှက်သည် အနည်းဆုံး စာလုံး 8 လုံး ရှိရမည်", "e_sshpass": "SSH စကားဝှက် လိုအပ်သည်"}, "vi": {"lang": "Ngôn ngữ", "user": "Tên người dùng", "pass": "Mật khẩu", "login": "Đăng nhập", "wrong": "Sai tên người dùng hoặc mật khẩu", "add": "Máy chủ mới", "logout": "Đăng xuất", "empty": "Chưa có máy chủ nào.", "add_first": "Thêm máy chủ đầu tiên", "new_server": "Máy chủ mới", "edit_title": "Sửa {name}", "name_opt": "Tên (tùy chọn)", "name_ph": "vd: Đức 1", "ip": "IP máy chủ", "ssh_port": "Cổng SSH", "ssh_user": "Người dùng SSH", "ssh_pass": "Mật khẩu SSH", "clear_key": "Xóa khóa SSH đã lưu (nếu máy chủ đã cài lại)", "save_install": "Lưu và cài đặt", "save_only": "Chỉ lưu", "cancel": "Hủy", "hint_edit": "Để trống mật khẩu để giữ mật khẩu hiện tại.", "st_new": "Chưa cài", "st_installing": "Đang cài", "st_installed": "Đã cài", "st_failed": "Thất bại", "st_removed": "Đã gỡ", "run_install": "Đang cài…", "run_status": "Đang kiểm tra…", "run_restart": "Đang khởi động lại…", "run_uninstall": "Đang gỡ…", "status": "Trạng thái", "reinstall": "Cài lại", "edit": "Sửa", "log": "Nhật ký", "delete": "Xóa", "no_job": "Chưa có tác vụ nào chạy trên máy chủ này.", "c_reinstall": "Cài lại? Cài đặt và mật khẩu mới sẽ được áp dụng.", "domain": "Tên miền (phải trỏ tới IP của máy chủ này)", "web_user": "Tên đăng nhập Firefox", "web_pass": "Mật khẩu đăng nhập Firefox (tối thiểu 8)", "resolution": "Độ phân giải màn hình", "hint_new": "Trước khi cài, hãy trỏ bản ghi A của tên miền tới IP máy chủ và mở cổng 80 và 443. HĐH: Ubuntu 22.04 / 24.04 hoặc Debian 12.", "open_ff": "Mở Firefox ↗", "install": "Cài Firefox", "restart": "Khởi động lại Firefox", "c_uninstall": "Gỡ Firefox khỏi {name}?", "c_remove": "{name}\n1 = gỡ cả Firefox khỏi máy chủ, rồi xóa khỏi danh sách\n2 = chỉ xóa khỏi danh sách", "e_host": "IP hoặc địa chỉ máy chủ không hợp lệ", "e_domain": "Tên miền không hợp lệ (ví dụ: fire.example.com)", "e_user": "Tên người dùng Firefox: 3 đến 32 chữ cái, chữ số, dấu chấm, gạch ngang hoặc gạch dưới", "e_pass": "Mật khẩu Firefox phải có ít nhất 8 ký tự", "e_sshpass": "Cần mật khẩu SSH"}, "es": {"lang": "Idioma", "user": "Usuario", "pass": "Contraseña", "login": "Entrar", "wrong": "Usuario o contraseña incorrectos", "add": "Nuevo servidor", "logout": "Salir", "empty": "Aún no hay servidores.", "add_first": "Agrega tu primer servidor", "new_server": "Nuevo servidor", "edit_title": "Editar {name}", "name_opt": "Nombre (opcional)", "name_ph": "p. ej. Alemania 1", "ip": "IP del servidor", "ssh_port": "Puerto SSH", "ssh_user": "Usuario SSH", "ssh_pass": "Contraseña SSH", "clear_key": "Borrar la clave SSH guardada (si reinstalaste el servidor)", "save_install": "Guardar e instalar", "save_only": "Solo guardar", "cancel": "Cancelar", "hint_edit": "Deja las contraseñas vacías para conservar las actuales.", "st_new": "No instalado", "st_installing": "Instalando", "st_installed": "Instalado", "st_failed": "Falló", "st_removed": "Eliminado", "run_install": "Instalando…", "run_status": "Comprobando…", "run_restart": "Reiniciando…", "run_uninstall": "Eliminando…", "status": "Estado", "reinstall": "Reinstalar", "edit": "Editar", "log": "Registro", "delete": "Eliminar", "no_job": "Todavía no se ha ejecutado nada en este servidor.", "c_reinstall": "¿Instalar de nuevo? Se aplicarán la nueva configuración y la contraseña.", "domain": "Dominio (debe apuntar a la IP de este servidor)", "web_user": "Usuario de acceso a Firefox", "web_pass": "Contraseña de acceso a Firefox (mín. 8)", "resolution": "Resolución de pantalla", "hint_new": "Antes de instalar, apunta el registro A del dominio a la IP del servidor y abre los puertos 80 y 443. SO: Ubuntu 22.04 / 24.04 o Debian 12.", "open_ff": "Abrir Firefox ↗", "install": "Instalar Firefox", "restart": "Reiniciar Firefox", "c_uninstall": "¿Quitar Firefox de {name}?", "c_remove": "{name}\n1 = quitar también Firefox del servidor y luego borrarlo de la lista\n2 = solo borrarlo de la lista", "e_host": "IP o host del servidor no válido", "e_domain": "Dominio no válido (ejemplo: fire.example.com)", "e_user": "Usuario de Firefox: de 3 a 32 letras, dígitos, punto, guion o guion bajo", "e_pass": "La contraseña de Firefox debe tener al menos 8 caracteres", "e_sshpass": "Se requiere la contraseña SSH"}, "am": {"lang": "ቋንቋ", "user": "የተጠቃሚ ስም", "pass": "የይለፍ ቃል", "login": "ግባ", "wrong": "የተጠቃሚ ስም ወይም የይለፍ ቃል ተሳስቷል", "add": "አዲስ ሰርቨር", "logout": "ውጣ", "empty": "እስካሁን ሰርቨር የለም።", "add_first": "የመጀመሪያ ሰርቨርህን አክል", "new_server": "አዲስ ሰርቨር", "edit_title": "{name} አርትዕ", "name_opt": "ስም (አማራጭ)", "name_ph": "ለምሳሌ ጀርመን 1", "ip": "የሰርቨር IP", "ssh_port": "SSH ፖርት", "ssh_user": "SSH ተጠቃሚ", "ssh_pass": "SSH የይለፍ ቃል", "clear_key": "የተቀመጠውን SSH ቁልፍ አጥፋ (ሰርቨሩ እንደገና ከተጫነ)", "save_install": "አስቀምጥና ጫን", "save_only": "አስቀምጥ ብቻ", "cancel": "ሰርዝ", "hint_edit": "የአሁኑን የይለፍ ቃል ለማቆየት ባዶ ተው።", "st_new": "አልተጫነም", "st_installing": "በመጫን ላይ", "st_installed": "ተጭኗል", "st_failed": "አልተሳካም", "st_removed": "ተወግዷል", "run_install": "በመጫን ላይ…", "run_status": "በመፈተሽ ላይ…", "run_restart": "እንደገና በማስጀመር ላይ…", "run_uninstall": "በማስወገድ ላይ…", "status": "ሁኔታ", "reinstall": "እንደገና ጫን", "edit": "አርትዕ", "log": "መዝገብ", "delete": "ሰርዝ", "no_job": "በዚህ ሰርቨር ላይ እስካሁን ምንም አልተሠራም።", "c_reinstall": "እንደገና ይጫን? አዲሱ ቅንብርና የይለፍ ቃል ይተገበራሉ።", "domain": "ዶሜይን (ወደዚህ ሰርቨር IP መጠቆም አለበት)", "web_user": "የFirefox መግቢያ ተጠቃሚ ስም", "web_pass": "የFirefox መግቢያ የይለፍ ቃል (ቢያንስ 8)", "resolution": "የስክሪን ጥራት", "hint_new": "ከመጫንህ በፊት የዶሜይኑን A ሪከርድ ወደ ሰርቨሩ IP ጠቁምና ፖርት 80 እና 443ን ክፈት። ስርዓት: Ubuntu 22.04 / 24.04 ወይም Debian 12።", "open_ff": "Firefox ክፈት ↗", "install": "Firefox ጫን", "restart": "Firefox እንደገና አስጀምር", "c_uninstall": "Firefox ከ{name} ይወገድ?", "c_remove": "{name}\n1 = Firefoxን ከሰርቨሩም አስወግድ፣ ከዚያ ከዝርዝሩ ሰርዝ\n2 = ከዝርዝሩ ብቻ ሰርዝ", "e_host": "የሰርቨሩ IP ወይም አድራሻ ልክ አይደለም", "e_domain": "ዶሜይኑ ልክ አይደለም (ምሳሌ: fire.example.com)", "e_user": "የFirefox ተጠቃሚ ስም: ከ3 እስከ 32 ፊደላት፣ ቁጥሮች፣ ነጥብ፣ ሰረዝ ወይም ከስር ሰረዝ", "e_pass": "የFirefox የይለፍ ቃል ቢያንስ 8 ቁምፊዎች መሆን አለበት", "e_sshpass": "SSH የይለፍ ቃል ያስፈልጋል"}, "ti": {"lang": "ቋንቋ", "user": "ስም ተጠቃሚ", "pass": "መሕለፊ ቃል", "login": "እቶ", "wrong": "ስም ተጠቃሚ ወይ መሕለፊ ቃል ጌጋ እዩ", "add": "ሓድሽ ሰርቨር", "logout": "ውጻእ", "empty": "ክሳብ ሕጂ ሰርቨር የለን።", "add_first": "ቀዳማይ ሰርቨርካ ወስኽ", "new_server": "ሓድሽ ሰርቨር", "edit_title": "{name} ኣመዓራርይ", "name_opt": "ስም (ኣማራጺ)", "name_ph": "ንኣብነት ጀርመን 1", "ip": "IP ሰርቨር", "ssh_port": "SSH ፖርት", "ssh_user": "SSH ተጠቃሚ", "ssh_pass": "SSH መሕለፊ ቃል", "clear_key": "ዝተዓቀበ SSH መፍትሕ ሰርዝ (ሰርቨር ዳግማይ እንተተኣትዩ)", "save_install": "ዓቅብን ኣእቱን", "save_only": "ዓቅብ ጥራይ", "cancel": "ሰርዝ", "hint_edit": "ናይ ሕጂ መሕለፊ ቃላት ንምዕቃብ ባዶ ግደፎ።", "st_new": "ኣይኣተወን", "st_installing": "ይኣቱ ኣሎ", "st_installed": "ኣትዩ", "st_failed": "ኣይሰለጠን", "st_removed": "ተኣልዩ", "run_install": "ይኣቱ ኣሎ…", "run_status": "ይምርመር ኣሎ…", "run_restart": "ዳግማይ ይጅምር ኣሎ…", "run_uninstall": "ይእለ ኣሎ…", "status": "ኩነታት", "reinstall": "ዳግማይ ኣእቱ", "edit": "ኣመዓራርይ", "log": "መዝገብ", "delete": "ሰርዝ", "no_job": "ኣብዚ ሰርቨር ክሳብ ሕጂ ዝተሰርሐ የለን።", "c_reinstall": "ዳግማይ ይእቶ ዶ? ሓድሽ ቅጥዒን መሕለፊ ቃልን ክትግበሩ እዮም።", "domain": "ዶሜይን (ናብ IP እዚ ሰርቨር ክሐብር ኣለዎ)", "web_user": "ስም ተጠቃሚ ምእታው Firefox", "web_pass": "መሕለፊ ቃል ምእታው Firefox (እንተወሓደ 8)", "resolution": "ጽሬት ስክሪን", "hint_new": "ቅድሚ ምእታው፡ A ሪከርድ ናይቲ ዶሜይን ናብ IP ሰርቨር ኣመልክት፡ ፖርት 80ን 443ን ክፈት። ስርዓት: Ubuntu 22.04 / 24.04 ወይ Debian 12።", "open_ff": "Firefox ክፈት ↗", "install": "Firefox ኣእቱ", "restart": "Firefox ዳግማይ ጀምር", "c_uninstall": "Firefox ካብ {name} ይእለ ዶ?", "c_remove": "{name}\n1 = Firefox ካብ ሰርቨር እውን ኣልዮ፣ ድሕሪኡ ካብ ዝርዝር ሰርዝ\n2 = ካብ ዝርዝር ጥራይ ሰርዝ", "e_host": "IP ወይ ኣድራሻ ሰርቨር ቅኑዕ ኣይኮነን", "e_domain": "ዶሜይን ቅኑዕ ኣይኮነን (ኣብነት: fire.example.com)", "e_user": "ስም ተጠቃሚ Firefox: ካብ 3 ክሳብ 32 ፊደላት፡ ቁጽርታት፡ ነጥቢ፡ ሰረዝ ወይ ታሕተዋይ ሰረዝ", "e_pass": "መሕለፊ ቃል Firefox እንተወሓደ 8 ፊደላት ክኸውን ኣለዎ", "e_sshpass": "SSH መሕለፊ ቃል የድሊ"}};
 const B = location.pathname.endsWith('/') ? location.pathname : location.pathname + '/';
 const $ = s => document.querySelector(s);
-const ST = {new:'نصب نشده', installing:'در حال نصب', installed:'نصب شده', failed:'ناموفق', removed:'حذف شده'};
-const ACT = {install:'نصب', status:'وضعیت', restart:'ری‌استارت', uninstall:'حذف'};
-let servers = [], open = {}, timers = {};
+let L = localStorage.getItem('sf-lang') || 'en'; if (!I18N[L]) L = 'en';
+function t(k, v){ let s = (I18N[L] && I18N[L][k]) || I18N.en[k] || k; if (v) for (const x in v) s = s.split('{'+x+'}').join(v[x]); return s; }
+function applyLang(){
+  const meta = LANGS.find(x => x[0] === L);
+  document.documentElement.lang = L; document.documentElement.dir = meta[3] ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-t]').forEach(e => e.textContent = t(e.dataset.t));
+  document.querySelectorAll('[data-tp]').forEach(e => e.placeholder = t(e.dataset.tp));
+  document.querySelectorAll('.lang-cur').forEach(e => e.textContent = meta[1]);
+  document.querySelectorAll('.lang-list button').forEach(b => b.classList.toggle('on', b.dataset.l === L));
+  if (!$('#app').hidden && servers) render();
+}
+function setLang(l){ L = l; localStorage.setItem('sf-lang', l); applyLang(); }
+function mountLang(slot){
+  const n = $('#langTpl').content.firstElementChild.cloneNode(true); slot.replaceWith(n);
+  const list = n.querySelector('.lang-list'), q = n.querySelector('.lang-q');
+  list.innerHTML = LANGS.map(([c,nat,en,rtl]) => `<button type="button" role="option" data-l="${c}" data-s="${(nat+' '+en+' '+c).toLowerCase()}"><b dir="${rtl?'rtl':'ltr'}">${nat}</b><small>${en}</small></button>`).join('');
+  n.querySelector('.lang-btn').onclick = e => { e.stopPropagation(); document.querySelectorAll('.lang.open').forEach(x => x !== n && x.classList.remove('open')); n.classList.toggle('open'); if (n.classList.contains('open')) { q.value=''; filter(); q.focus(); } };
+  const filter = () => { const v = q.value.trim().toLowerCase(); list.querySelectorAll('button').forEach(b => b.hidden = v && !b.dataset.s.includes(v)); };
+  q.oninput = filter;
+  q.onkeydown = e => { if (e.key === 'Enter') { const b = [...list.querySelectorAll('button')].find(b => !b.hidden); if (b) b.click(); } if (e.key === 'Escape') n.classList.remove('open'); };
+  list.onclick = e => { const b = e.target.closest('button'); if (b) { setLang(b.dataset.l); n.classList.remove('open'); } };
+  n.querySelector('.lang-pop').onclick = e => e.stopPropagation();
+}
+document.addEventListener('click', () => document.querySelectorAll('.lang.open').forEach(x => x.classList.remove('open')));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.lang.open').forEach(x => x.classList.remove('open')); });
+document.querySelectorAll('.lang-slot').forEach(mountLang);
+
+let servers = null, open = {}, timers = {};
 async function api(p, body) {
   const o = body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json','X-SF':'1'}, body:JSON.stringify(body)};
   const r = await fetch(B + 'api/' + p, o);
   if (r.status === 401 && p !== 'login') { show(false); throw new Error('login'); }
-  const t = await r.text(); let j = {}; try { j = t ? JSON.parse(t) : {}; } catch (e) {}
+  const tx = await r.text(); let j = {}; try { j = tx ? JSON.parse(tx) : {}; } catch (e) {}
   if (!r.ok) throw new Error(j.error || r.statusText);
   return j;
 }
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function show(authed){ $('#login').hidden = authed; $('#app').hidden = !authed; if(authed) load(); }
-async function init(){ const j = await api('login'); $('#ver').textContent = 'v' + j.version; show(j.authed); }
+async function init(){ applyLang(); const j = await api('login'); $('#ver').textContent = 'v' + j.version; show(j.authed); }
 $('#lbtn').onclick = async () => { $('#lerr').textContent='';
-  try { await api('login', {User:$('#lu').value, Pass:$('#lp').value}); show(true); } catch(e){ $('#lerr').textContent = 'نام کاربری یا رمز اشتباه است'; } };
+  try { await api('login', {User:$('#lu').value, Pass:$('#lp').value}); show(true); } catch(e){ $('#lerr').textContent = t('wrong'); } };
 $('#lp').onkeydown = e => { if (e.key === 'Enter') $('#lbtn').click(); };
 async function logout(){ await api('logout', {}); show(false); }
-async function load(){
-  servers = await api('servers');
-  const L = $('#list');
-  if (!servers.length) { L.innerHTML = '<div class="card empty">هنوز سروری اضافه نکرده‌ای.<br><br><button class="pri" onclick="openForm()">+ افزودن اولین سرور</button></div>'; return; }
-  L.innerHTML = servers.map(s => {
+async function load(){ servers = await api('servers'); render(); }
+function render(){
+  const Lst = $('#list');
+  if (!servers.length) { Lst.innerHTML = `<div class="card empty">${esc(t('empty'))}<br><br><button class="pri" onclick="openForm()">+ ${esc(t('add_first'))}</button></div>`; return; }
+  Lst.innerHTML = servers.map(s => {
     const st = s.Running ? 'installing' : s.Status, busy = !!s.Running;
-    const label = s.Running ? 'در حال ' + ACT[s.Running] : (ST[s.Status] || s.Status);
+    const label = s.Running ? t('run_' + s.Running) : t('st_' + s.Status);
     return `<div class="card" id="c-${s.ID}">
       <div class="row"><div><div class="name">${esc(s.Name)}</div><div class="meta">${esc(s.SSHUser)}@${esc(s.Host)}:${s.SSHPort} · ${esc(s.Domain)} · ${esc(s.Resolution)}</div></div>
-      <span class="badge s-${st}">${label}</span></div>
+      <span class="badge s-${st}">${esc(label)}</span></div>
       ${s.LastError ? `<div class="err">${esc(s.LastError)}</div>` : ''}
       <div class="acts">
-        ${s.Status === 'installed' ? `<a class="btn pri" href="${esc(s.URL)}" target="_blank" rel="noopener">باز کردن Firefox ↗</a>` : `<button class="pri" ${busy?'disabled':''} onclick="run('${s.ID}','install')">نصب Firefox</button>`}
-        <button ${busy?'disabled':''} onclick="run('${s.ID}','status')">وضعیت</button>
-        <button ${busy?'disabled':''} onclick="run('${s.ID}','restart')">ری‌استارت Firefox</button>
-        ${s.Status === 'installed' ? `<button ${busy?'disabled':''} onclick="run('${s.ID}','install')">نصب دوباره</button>` : ''}
-        <button ${busy?'disabled':''} onclick="openForm('${s.ID}')">ویرایش</button>
-        <button onclick="toggleLog('${s.ID}')">لاگ</button>
-        <button class="danger" ${busy?'disabled':''} onclick="removeSrv('${s.ID}')">حذف</button>
+        ${s.Status === 'installed' ? `<a class="btn pri" href="${esc(s.URL)}" target="_blank" rel="noopener">${esc(t('open_ff'))}</a>` : `<button class="pri" ${busy?'disabled':''} onclick="run('${s.ID}','install')">${esc(t('install'))}</button>`}
+        <button ${busy?'disabled':''} onclick="run('${s.ID}','status')">${esc(t('status'))}</button>
+        <button ${busy?'disabled':''} onclick="run('${s.ID}','restart')">${esc(t('restart'))}</button>
+        ${s.Status === 'installed' ? `<button ${busy?'disabled':''} onclick="run('${s.ID}','install')">${esc(t('reinstall'))}</button>` : ''}
+        <button ${busy?'disabled':''} onclick="openForm('${s.ID}')">${esc(t('edit'))}</button>
+        <button onclick="toggleLog('${s.ID}')">${esc(t('log'))}</button>
+        <button class="danger" ${busy?'disabled':''} onclick="removeSrv('${s.ID}')">${esc(t('delete'))}</button>
       </div><pre id="log-${s.ID}" ${open[s.ID]?'':'hidden'}></pre></div>`;
   }).join('');
   for (const s of servers) { if (open[s.ID] || s.Running) { open[s.ID] = open[s.ID] || {from:0}; open[s.ID].from = 0; $('#log-'+s.ID).hidden = false; poll(s.ID); } }
@@ -119,7 +168,7 @@ async function poll(id){
   const el = $('#log-'+id); if (!el) return;
   try {
     const j = await api('log?id=' + id + '&from=' + o.from);
-    if (o.from === 0) el.textContent = j.none ? 'هنوز کاری روی این سرور اجرا نشده.' : '';
+    if (o.from === 0) el.textContent = j.none ? t('no_job') : '';
     if (j.lines.length) { el.textContent += j.lines.join('\n') + '\n'; el.scrollTop = el.scrollHeight; }
     o.from = j.next;
     if (!j.done) timers[id] = setTimeout(() => poll(id), 1200);
@@ -129,22 +178,24 @@ async function poll(id){
 }
 async function run(id, action){
   const s = servers.find(x => x.ID === id);
-  if (action === 'uninstall' && !confirm('Firefox از ' + s.Name + ' حذف شود؟')) return;
-  if (action === 'install' && s.Status === 'installed' && !confirm('دوباره نصب شود؟ تنظیمات و رمز جدید اعمال می‌شود.')) return;
+  if (action === 'uninstall' && !confirm(t('c_uninstall', {name:s.Name}))) return;
+  if (action === 'install' && s.Status === 'installed' && !confirm(t('c_reinstall'))) return;
   try { await api('run', {ID:id, Action:action}); open[id] = {from:0, wasRunning:true}; await load(); } catch (e) { alert(e.message); }
 }
 async function removeSrv(id){
   const s = servers.find(x => x.ID === id);
-  const c = prompt('برای «' + s.Name + '»:\n۱ = Firefox را از خود سرور هم پاک کن، بعد از لیست حذف کن\n۲ = فقط از لیست حذف کن', '2');
+  const c = (prompt(t('c_remove', {name:s.Name}), '2') || '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).trim();
   if (c === '1') { await run(id, 'uninstall'); return; }
   if (c === '2') { await api('delete', {ID:id}); delete open[id]; load(); }
 }
+const ERRS = {'invalid server IP or host':'e_host','invalid domain (example: fire.example.com)':'e_domain',
+  'Firefox username: 3 to 32 letters, digits, dot, dash or underscore':'e_user','Firefox password must be at least 8 characters':'e_pass','SSH password is required':'e_sshpass'};
 function openForm(id){
   const f = $('#frm'); f.reset(); $('#ferr').textContent = '';
-  const s = servers.find(x => x.ID === id);
-  $('#ftitle').textContent = s ? 'ویرایش ' + s.Name : 'سرور جدید';
+  const s = id ? servers.find(x => x.ID === id) : null;
+  $('#ftitle').textContent = s ? t('edit_title', {name:s.Name}) : t('new_server');
   $('#hkrow').hidden = !(s && s.HostKey);
-  $('#fhint').textContent = s ? 'رمزها را خالی بگذار تا قبلی‌ها بمانند.' : 'قبل از نصب، رکورد A دامنه را روی IP سرور بگذار و پورت‌های 80 و 443 باز باشند. سیستم‌عامل: Ubuntu 22.04 / 24.04 یا Debian 12.';
+  $('#fhint').textContent = s ? t('hint_edit') : t('hint_new');
   f.ID.value = s ? s.ID : '';
   if (s) for (const k of ['Name','Host','SSHPort','SSHUser','Domain','WebUser','Resolution']) f[k].value = s[k];
   dlg.showModal();
@@ -154,7 +205,7 @@ async function save(install){
   for (const k of ['ID','Name','Host','SSHUser','SSHPass','Domain','WebUser','WebPass','Resolution']) d[k] = f[k].value.trim();
   d.SSHPort = parseInt(f.SSHPort.value) || 22; d.ClearHostKey = f.ClearHostKey.checked;
   try { const j = await api('servers', d); dlg.close(); await load(); if (install) run(j.id, 'install'); }
-  catch (e) { $('#ferr').textContent = e.message; }
+  catch (e) { $('#ferr').textContent = ERRS[e.message] ? t(ERRS[e.message]) : e.message; }
 }
 init();
 </script>

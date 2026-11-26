@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Server Firefox</title>
+<style>
+:root{--bg:#0f1115;--card:#171a21;--line:#262a33;--tx:#e8e6e3;--mut:#8b909a;--acc:#ff7139;--ok:#3ecf8e;--bad:#ff5d5d;--warn:#f5b84a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Vazirmatn,Tahoma,"Noto Sans","Noto Sans Ethiopic","Noto Sans Myanmar","Myanmar Text","Nyala","Ebrima",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:28px 18px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:22px}
+h1{font-size:20px;margin:0;display:flex;gap:10px;align-items:center}h1 i{width:12px;height:12px;border-radius:50%;background:var(--acc);display:inline-block}
+.mut{color:var(--mut);font-size:13px}.top{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+button,.btn{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:9px;padding:7px 13px;font:inherit;font-size:13px;cursor:pointer;text-decoration:none;display:inline-block}
+button:hover,.btn:hover{border-color:#3a3f4a}.pri{background:var(--acc);border-color:var(--acc);color:#111;font-weight:600}.pri:hover{border-color:#ff9a6e}
+.danger{color:var(--bad)}button:disabled{opacity:.45;cursor:default}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.name{font-weight:600;font-size:16px}.meta{direction:ltr;unicode-bidi:isolate;color:var(--mut);font-size:13px}
+.badge{font-size:12px;padding:2px 9px;border-radius:20px;border:1px solid var(--line)}
+.s-installed{color:var(--ok);border-color:#24533f}.s-failed{color:var(--bad);border-color:#5a2a2a}.s-installing{color:var(--warn);border-color:#5a4a22}
+.here{font-size:11px;color:var(--acc);border:1px solid #2c4a7a;border-radius:20px;padding:1px 8px;margin-inline-start:6px;vertical-align:2px}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.err{color:var(--bad);font-size:13px;margin-top:8px}
+pre{direction:ltr;text-align:left;background:#0b0c0f;border:1px solid var(--line);border-radius:10px;padding:12px;max-height:360px;overflow:auto;font:12px/1.55 ui-monospace,Menlo,monospace;margin:12px 0 0;white-space:pre-wrap}
+dialog{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:16px;padding:22px;width:min(520px,94vw)}
+dialog::backdrop{background:#000a}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+label.ck{display:flex;gap:8px;align-items:center;color:var(--tx)}label.ck input{width:auto}
+input,select{width:100%;background:#0f1115;color:var(--tx);border:1px solid var(--line);border-radius:9px;padding:9px 11px;font:inherit}
+input.ltr{direction:ltr;text-align:left}.g2{display:grid;grid-template-columns:2fr 1fr;gap:10px}.g11{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.empty{text-align:center;padding:50px 20px;color:var(--mut)}
+#login{max-width:360px;margin:12vh auto}#login .lrow{display:flex;justify-content:space-between;align-items:center}
+/* language picker */
+.lang{position:relative}
+.lang>button{display:flex;gap:7px;align-items:center;border-radius:20px;padding:6px 12px}
+.lang>button svg{width:15px;height:15px;opacity:.8}
+.lang-pop{position:absolute;top:calc(100% + 8px);inset-inline-end:0;z-index:20;width:300px;background:#1b1f27;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px #000b;padding:8px;display:none}
+.lang.open .lang-pop{display:block;animation:pop .14s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.lang-pop input{margin-bottom:6px;padding:7px 10px;font-size:13px}
+.lang-list{max-height:min(380px,60vh);overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.lang-list button{all:unset;cursor:pointer;padding:7px 10px;border-radius:9px;display:flex;flex-direction:column;line-height:1.3}
+.lang-list button:hover,.lang-list button:focus-visible{background:#262b35}
+.lang-list button.on{background:#3a2318;outline:1px solid #a8512f}
+.lang-list b{font-weight:600;font-size:14px}.lang-list small{color:var(--mut);font-size:11px;direction:ltr}
+</style>
+</head>
+<body>
+<template id="langTpl">
+  <div class="lang">
+    <button type="button" class="lang-btn" aria-haspopup="listbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 3.9 5.8 3.9 9s-1.3 6.2-3.9 9c-2.6-2.8-3.9-5.8-3.9-9S9.4 5.8 12 3z"/></svg><span class="lang-cur"></span></button>
+    <div class="lang-pop"><input type="search" class="lang-q" placeholder="Search / جستجو"><div class="lang-list" role="listbox"></div></div>
+  </div>
+</template>
+
+<div id="login" class="card" hidden>
+  <div class="lrow"><h1><i></i> Server Firefox</h1><span class="lang-slot"></span></div>
+  <label data-t="user"></label><input id="lu" class="ltr" autocomplete="username">
+  <label data-t="pass"></label><input id="lp" class="ltr" type="password" autocomplete="current-password">
+  <div class="err" id="lerr"></div>
+  <p><button class="pri" id="lbtn" style="width:100%" data-t="login"></button></p>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header>
+    <h1><i></i> Server Firefox <span class="mut" id="ver"></span></h1>
+    <div class="top"><button class="pri" onclick="openForm()">+ <span data-t="add"></span></button><span class="lang-slot"></span><button onclick="logout()" data-t="logout"></button></div>
+  </header>
+  <div id="list"></div>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" id="frm" onsubmit="return false">
+    <div class="name" id="ftitle"></div>
+    <input type="hidden" name="ID">
+    <label data-t="name_opt"></label><input name="Name" data-tp="name_ph">
+    <div class="g2"><div><label data-t="ip"></label><input name="Host" class="ltr" placeholder="1.2.3.4"></div>
+      <div><label data-t="ssh_port"></label><input name="SSHPort" class="ltr" type="number" value="22"></div></div>
+    <div class="g11"><div><label data-t="ssh_user"></label><input name="SSHUser" class="ltr" value="root"></div>
+      <div><label data-t="ssh_pass"></label><input name="SSHPass" class="ltr" type="password" autocomplete="new-password"></div></div>
+    <label data-t="domain"></label><input name="Domain" class="ltr" placeholder="fire.example.com">
+    <div class="g11"><div><label data-t="web_user"></label><input name="WebUser" class="ltr" value="firefox"></div>
+      <div><label data-t="web_pass"></label><input name="WebPass" class="ltr" type="password" autocomplete="new-password"></div></div>
+    <label data-t="resolution"></label>
+    <select name="Resolution" class="ltr"><option>1920x1080</option><option>1600x900</option><option>1366x768</option><option>1280x800</option><option>2560x1440</option></select>
+    <label class="ck" id="hkrow"><input type="checkbox" name="ClearHostKey"> <span data-t="clear_key"></span></label>
+    <p class="mut" id="fhint"></p>
+    <div class="err" id="ferr"></div>
+    <div class="acts"><button class="pri" onclick="save(true)" data-t="save_install"></button><button onclick="save(false)" data-t="save_only"></button><button onclick="dlg.close()" data-t="cancel"></button></div>
+  </form>
+</dialog>
+
+<script>
+const LANGS = /*LANGS*/;
+const I18N = /*I18N*/;
+const B = location.pathname.endsWith('/') ? location.pathname : location.pathname + '/';
+const $ = s => document.querySelector(s);
+let L = localStorage.getItem('sf-lang') || 'en'; if (!I18N[L]) L = 'en';
+function t(k, v){ let s = (I18N[L] && I18N[L][k]) || I18N.en[k] || k; if (v) for (const x in v) s = s.split('{'+x+'}').join(v[x]); return s; }
+function applyLang(){
+  const meta = LANGS.find(x => x[0] === L);
+  document.documentElement.lang = L; document.documentElement.dir = meta[3] ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-t]').forEach(e => e.textContent = t(e.dataset.t));
+  document.querySelectorAll('[data-tp]').forEach(e => e.placeholder = t(e.dataset.tp));
+  document.querySelectorAll('.lang-cur').forEach(e => e.textContent = meta[1]);
+  document.querySelectorAll('.lang-list button').forEach(b => b.classList.toggle('on', b.dataset.l === L));
+  if (!$('#app').hidden && servers) render();
+}
+function setLang(l){ L = l; localStorage.setItem('sf-lang', l); applyLang(); }
+function mountLang(slot){
+  const n = $('#langTpl').content.firstElementChild.cloneNode(true); slot.replaceWith(n);
+  const list = n.querySelector('.lang-list'), q = n.querySelector('.lang-q');
+  list.innerHTML = LANGS.map(([c,nat,en,rtl]) => `<button type="button" role="option" data-l="${c}" data-s="${(nat+' '+en+' '+c).toLowerCase()}"><b dir="${rtl?'rtl':'ltr'}">${nat}</b><small>${en}</small></button>`).join('');
+  n.querySelector('.lang-btn').onclick = e => { e.stopPropagation(); document.querySelectorAll('.lang.open').forEach(x => x !== n && x.classList.remove('open')); n.classList.toggle('open'); if (n.classList.contains('open')) { q.value=''; filter(); q.focus(); } };
+  const filter = () => { const v = q.value.trim().toLowerCase(); list.querySelectorAll('button').forEach(b => b.hidden = v && !b.dataset.s.includes(v)); };
+  q.oninput = filter;
+  q.onkeydown = e => { if (e.key === 'Enter') { const b = [...list.querySelectorAll('button')].find(b => !b.hidden); if (b) b.click(); } if (e.key === 'Escape') n.classList.remove('open'); };
+  list.onclick = e => { const b = e.target.closest('button'); if (b) { setLang(b.dataset.l); n.classList.remove('open'); } };
+  n.querySelector('.lang-pop').onclick = e => e.stopPropagation();
+}
+document.addEventListener('click', () => document.querySelectorAll('.lang.open').forEach(x => x.classList.remove('open')));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.lang.open').forEach(x => x.classList.remove('open')); });
+document.querySelectorAll('.lang-slot').forEach(mountLang);
+
+let servers = null, open = {}, timers = {};
+async function api(p, body) {
+  const o = body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json','X-SF':'1'}, body:JSON.stringify(body)};
+  const r = await fetch(B + 'api/' + p, o);
+  if (r.status === 401 && p !== 'login') { show(false); throw new Error('login'); }
+  const tx = await r.text(); let j = {}; try { j = tx ? JSON.parse(tx) : {}; } catch (e) {}
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function show(authed){ $('#login').hidden = authed; $('#app').hidden = !authed; if(authed) load(); }
+async function init(){ applyLang(); const j = await api('login'); $('#ver').textContent = 'v' + j.version; show(j.authed); }
+$('#lbtn').onclick = async () => { $('#lerr').textContent='';
+  try { await api('login', {User:$('#lu').value, Pass:$('#lp').value}); show(true); } catch(e){ $('#lerr').textContent = t('wrong'); } };
+$('#lp').onkeydown = e => { if (e.key === 'Enter') $('#lbtn').click(); };
+async function logout(){ await api('logout', {}); show(false); }
+async function load(){ servers = await api('servers'); render(); }
+function render(){
+  const Lst = $('#list');
+  if (!servers.length) { Lst.innerHTML = `<div class="card empty">${esc(t('empty'))}<br><br><button class="pri" onclick="openForm()">+ ${esc(t('add_first'))}</button></div>`; return; }
+  Lst.innerHTML = servers.map(s => {
+    const st = s.Running ? 'installing' : s.Status, busy = !!s.Running;
+    const label = s.Running ? t('run_' + s.Running) : t('st_' + s.Status);
+    return `<div class="card" id="c-${s.ID}">
+      <div class="row"><div><div class="name">${esc(s.Name)}</div><div class="meta">${esc(s.SSHUser)}@${esc(s.Host)}:${s.SSHPort} · ${esc(s.Domain)} · ${esc(s.Resolution)}</div></div>
+      <span class="badge s-${st}">${esc(label)}</span></div>
+      ${s.LastError ? `<div class="err">${esc(s.LastError)}</div>` : ''}
+      <div class="acts">
+        ${s.Status === 'installed' ? `<a class="btn pri" href="${esc(s.URL)}" target="_blank" rel="noopener">${esc(t('open_ff'))}</a>` : `<button class="pri" ${busy?'disabled':''} onclick="run('${s.ID}','install')">${esc(t('install'))}</button>`}
+        <button ${busy?'disabled':''} onclick="run('${s.ID}','status')">${esc(t('status'))}</button>
+        <button ${busy?'disabled':''} onclick="run('${s.ID}','restart')">${esc(t('restart'))}</button>
+        ${s.Status === 'installed' ? `<button ${busy?'disabled':''} onclick="run('${s.ID}','install')">${esc(t('reinstall'))}</button>` : ''}
+        <button ${busy?'disabled':''} onclick="openForm('${s.ID}')">${esc(t('edit'))}</button>
+        <button onclick="toggleLog('${s.ID}')">${esc(t('log'))}</button>
+        <button class="danger" ${busy?'disabled':''} onclick="removeSrv('${s.ID}')">${esc(t('delete'))}</button>
+      </div><pre id="log-${s.ID}" ${open[s.ID]?'':'hidden'}></pre></div>`;
+  }).join('');
+  for (const s of servers) { if (open[s.ID] || s.Running) { open[s.ID] = open[s.ID] || {from:0}; open[s.ID].from = 0; $('#log-'+s.ID).hidden = false; poll(s.ID); } }
+}
+function toggleLog(id){ const el = $('#log-'+id); if (open[id]) { delete open[id]; el.hidden = true; return; } open[id] = {from:0}; el.hidden = false; poll(id); }
+async function poll(id){
+  clearTimeout(timers[id]); const o = open[id]; if (!o) return;
+  const el = $('#log-'+id); if (!el) return;
+  try {
+    const j = await api('log?id=' + id + '&from=' + o.from);
+    if (o.from === 0) el.textContent = j.none ? t('no_job') : '';
+    if (j.lines.length) { el.textContent += j.lines.join('\n') + '\n'; el.scrollTop = el.scrollHeight; }
+    o.from = j.next;
+    if (!j.done) timers[id] = setTimeout(() => poll(id), 1200);
+    else if (o.wasRunning) { o.wasRunning = false; load(); }
+    if (!j.done) o.wasRunning = true;
+  } catch (e) {}
+}
+async function run(id, action){
+  const s = servers.find(x => x.ID === id);
+  if (action === 'uninstall' && !confirm(t('c_uninstall', {name:s.Name}))) return;
+  if (action === 'install' && s.Status === 'installed' && !confirm(t('c_reinstall'))) return;
+  try { await api('run', {ID:id, Action:action}); open[id] = {from:0, wasRunning:true}; await load(); } catch (e) { alert(e.message); }
+}
+async function removeSrv(id){
+  const s = servers.find(x => x.ID === id);
+  const c = (prompt(t('c_remove', {name:s.Name}), '2') || '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).trim();
+  if (c === '1') { await run(id, 'uninstall'); return; }
+  if (c === '2') { await api('delete', {ID:id}); delete open[id]; load(); }
+}
+const ERRS = {'invalid server IP or host':'e_host','invalid domain (example: fire.example.com)':'e_domain',
+  'Firefox username: 3 to 32 letters, digits, dot, dash or underscore':'e_user','Firefox password must be at least 8 characters':'e_pass','SSH password is required':'e_sshpass'};
+function openForm(id){
+  const f = $('#frm'); f.reset(); $('#ferr').textContent = '';
+  const s = id ? servers.find(x => x.ID === id) : null;
+  $('#ftitle').textContent = s ? t('edit_title', {name:s.Name}) : t('new_server');
+  $('#hkrow').hidden = !(s && s.HostKey);
+  $('#fhint').textContent = s ? t('hint_edit') : t('hint_new');
+  f.ID.value = s ? s.ID : '';
+  if (s) for (const k of ['Name','Host','SSHPort','SSHUser','Domain','WebUser','Resolution']) f[k].value = s[k];
+  dlg.showModal();
+}
+async function save(install){
+  const f = $('#frm'), d = {};
+  for (const k of ['ID','Name','Host','SSHUser','SSHPass','Domain','WebUser','WebPass','Resolution']) d[k] = f[k].value.trim();
+  d.SSHPort = parseInt(f.SSHPort.value) || 22; d.ClearHostKey = f.ClearHostKey.checked;
+  try { const j = await api('servers', d); dlg.close(); await load(); if (install) run(j.id, 'install'); }
+  catch (e) { $('#ferr').textContent = ERRS[e.message] ? t(ERRS[e.message]) : e.message; }
+}
+init();
+</script>
+</body>
+</html>
